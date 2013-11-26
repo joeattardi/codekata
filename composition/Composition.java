@@ -17,10 +17,26 @@ import java.util.ArrayList;
  * @author Joe Attardi (joe@attardi.net)
  */
 public class Composition {
-  private List<List<List<String>>> dictionary;
+  private int wordLength;
+  private Dictionary dictionary;
 
-  public Composition() {
-    dictionary = loadDictionary();
+  public Composition(int wordLength) {
+    this.wordLength = wordLength;
+    dictionary = new Dictionary(wordLength);
+    loadDictionary();
+  }
+
+  private void loadDictionary() {
+    try (BufferedReader reader = new BufferedReader(new FileReader("wordlist.txt"))) {
+      String word = "";
+      while ((word = reader.readLine()) != null) {
+        if (word.length() <= wordLength) {
+          dictionary.addWord(word);
+        }
+      }
+    } catch (IOException ioe) {
+      ioe.printStackTrace();
+    }
   }
 
   /**
@@ -28,11 +44,9 @@ public class Composition {
    * Results will be printed to stdout.
    */
   public void findComposites() {
-    List<List<String>> words = dictionary.get(5);
-    for (List<String> subWords : words) {
-      for (String word: subWords) {
-        processWord(word);
-      }
+    List<String> words = dictionary.getWords(wordLength);
+    for (String word: words) {
+      processWord(word);
     }
   }
 
@@ -41,7 +55,7 @@ public class Composition {
    * @param word The word to operate on.
    */
   private void processWord(final String word) {
-    for (int n = 4; n >= 0; n--) {
+    for (int n = wordLength - 1; n > 0; n--) {
       findSubWords(word, n);
     }
   }
@@ -55,63 +69,87 @@ public class Composition {
    * @param firstWordLength The length of the first sub-word.
    */
   private void findSubWords(final String word, final int firstWordLength) {
-    String word1 = word.substring(0, firstWordLength + 1);
-    if (findWord(word1)) {
-      String word2 = word.substring(firstWordLength + 1);
-      if (findWord(word2)) {
+    String word1 = word.substring(0, firstWordLength);
+    if (dictionary.findWord(word1)) {
+      String word2 = word.substring(firstWordLength);
+      if (dictionary.findWord(word2)) {
         System.out.println(word + " => " + word1 + " + " + word2);
       }
     }
   }
 
-  /**
-   * Checks if a word exists in the dictionary.
-   * @param word The word to look up.
-   * @return true if the word is found in the dictionary, false if not.
-   */
-  private boolean findWord(final String word) {
-    return dictionary.get(word.length() - 1).get(getFirstLetterIndex(word)).contains(word);
-  }
+  public static void main(String...args) {
+    int wordLength = 6;
 
-  /**
-   * Gets the first letter index of a given word.
-   * @param word The word to operate on.
-   * @return An integer, between 0 and 25, representing the letter's position in the alphabet
-   */
-  private int getFirstLetterIndex(String word) {
-    return (int) word.toLowerCase().charAt(0) - (int) 'a';
-  }
-
-  /**
-   * Processes the word list file and creates the dictionary data structure.
-   */
-  private List<List<List<String>>> loadDictionary() {
-    List<List<List<String>>> dictionary = new ArrayList<>();
-    for (int len = 0; len < 6; len++) {
-      List<List<String>> letterList = new ArrayList<>(26);
-      for (int letter = 0; letter < 26; letter++) {
-        List<String> wordList = new ArrayList<>();
-        letterList.add(wordList);
+    if (args.length > 0) {
+      try {
+        wordLength = Integer.parseInt(args[0]);
+      } catch (NumberFormatException nfe) {
+        // ignore the input, use the default value
       }
+    }
+    new Composition(wordLength).findComposites();
+  }
+}
+
+class Dictionary {
+  private List<List<List<String>>> dictionary = new ArrayList<>();
+
+  /**
+   * Creates a Dictionary with a given maximum word length.
+   * @param maxWordLength The maximum word length this Dictionary will contain.
+   */
+  public Dictionary(final int maxWordLength) {
+    for (int len = 0; len < maxWordLength; len++) {
+      List<List<String>> letterList = new ArrayList<>();
+      for (int letter = 0; letter < 26; letter++) {
+        letterList.add(new ArrayList<String>());
+      }
+
       dictionary.add(letterList);
     }
-
-    try (BufferedReader reader = new BufferedReader(new FileReader("wordlist.txt"))) {
-      String line = "";
-      while ((line = reader.readLine()) != null) {
-        if (line.length() <= 6) {
-          List<String> wordList = dictionary.get(line.length() - 1).get(getFirstLetterIndex(line));
-          wordList.add(line);
-        }
-      }
-    } catch (IOException ioe) {
-      ioe.printStackTrace();
-    }
-
-    return dictionary;
   }
 
-  public static void main(String...args) {
-    new Composition().findComposites();
+  /**
+   * Gets all the words of a given length.
+   * @param length The desired length
+   * @return A List<String> containing all words in the dictionary of the specified length.
+   */
+  public List<String> getWords(final int length) {
+    List<String> words = new ArrayList<>();
+    for (int letter = 0; letter < 25; letter++) {
+      words.addAll(dictionary.get(length - 1).get(letter));
+    }
+
+    return words;
+  }
+
+  /**
+   * Searches the dictionary for a given word.
+   * @param word The word to search for.
+   * @return true if the word is found, false if not
+   */
+  public boolean findWord(final String word) {
+    return getWordList(word).contains(word);
+  }
+
+  /**
+   * Gets the correct word list for storing or retrieving a given word.
+   * @param word The word to store or retrieve.
+   * @return The proper List<String> to contain the given word.
+   */
+  private List<String> getWordList(final String word) {
+    // Some words contain characters like hyphens, which will make the list index < 0. To prevent an
+    // ArrayIndexOutOfBoundsException, if the first character is a non-alphabetic character, stick it
+    // in the first list.
+    return dictionary.get(word.length() - 1).get(Math.max(0, (int) word.toLowerCase().charAt(0) - (int) 'a'));
+  }
+
+  /**
+   * Adds a word to the dictionary.
+   * @param word The word to add
+   */
+  public void addWord(final String word) {
+    getWordList(word).add(word);
   }
 }
