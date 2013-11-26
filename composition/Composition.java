@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 /**
- * Solution to Code Kata Eight: Conflicting Objectives
+ * A fast solution to Code Kata Eight: Conflicting Objectives
  * http://codekata.pragprog.com/2007/01/kata_eight_conf.html
  *
  * Finds all six-letter words that are the composite of two smaller words.
@@ -13,6 +13,11 @@ import java.util.ArrayList;
  *    sonnet => son + net
  *    output => out + put
  *    tenor => ten + or
+ *
+ * This solution partitions the dictionary by word length and starting letter, forming a tree structure.
+ * The dictionary has one List for each word length. Each of those Lists contains 26 lists, one for each
+ * letter of the alphabet. Those lists will contain each word of the given length and starting with the
+ * given letter. This makes a much smaller set of data to search for a given word.
  *
  * @author Joe Attardi (joe@attardi.net)
  */
