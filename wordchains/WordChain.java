@@ -25,7 +25,7 @@ public class WordChain {
 
     public static void main(String...args) {
         if (args.length < 2) {
-            System.err.println("Usage: WordChains <start word> <end word>");
+            System.err.println("Usage: WordChain <start word> <end word>");
             System.exit(1);
         } 
 

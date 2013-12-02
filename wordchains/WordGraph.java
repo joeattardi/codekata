@@ -4,6 +4,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Queue;
+import java.util.LinkedList;
 
 /**
  * A graph to hold word chain data, and find the shortest path between words.
@@ -44,78 +46,59 @@ public class WordGraph {
 	}
 	
 	/**
-	 * Finds the shortest path in the graph between two words. Uses Dijkstra's algorithm.
+	 * Finds the shortest path between two words using a breadth-first search of the graph.
+	 *
 	 * @param fromWord The starting word
 	 * @param toWord The ending word
-	 * @return A List of the words that make up the shortest path between the two words, or null if no path was found.
+	 * @return a List of words in the shortest path, or null if no path could be found
 	 */
 	public List<String> findShortestPath(final String fromWord, final String toWord) {
 		if (!wordMap.containsKey(fromWord) || !wordMap.containsKey(toWord)) {
 			return null;
 		}
 
-		Map<String, Integer> distances = new HashMap<>();
-		List<String> visited = new ArrayList<>();
 		Map<String, String> previous = new HashMap<>();
-		Set<String> wordsToVisit = new HashSet<>();
-		
-		distances.put(fromWord, 0);
-		wordsToVisit.add(fromWord);
-		
-		String visitWord = null;
-		while (!wordsToVisit.isEmpty() && !(visitWord = getNextWord(wordsToVisit, distances)).equals(toWord)) {
-			wordsToVisit.remove(visitWord);
-			visited.add(visitWord);
 
-			for (String nextWord : wordMap.get(visitWord)) {
-				int distance = distances.get(visitWord) + 1;
-				if (!distances.containsKey(nextWord) || distance < distances.get(nextWord)) {
-					distances.put(nextWord, distance);
-					previous.put(nextWord, visitWord);
-					if (!visited.contains(nextWord)) {
-						wordsToVisit.add(nextWord);
-					}
+		Set<String> visited = new HashSet<>();
+		visited.add(fromWord);
+
+		Queue<String> q = new LinkedList<>();
+		q.add(fromWord);
+
+		String word = null;
+		while (!q.isEmpty() && !(word = q.remove()).equals(toWord)) {
+			for (String nextWord : wordMap.get(word)) {
+				if (!visited.contains(nextWord)) {
+					visited.add(nextWord);
+					previous.put(nextWord, word);
+					q.add(nextWord);
 				}
 			}
 		}
-		
-		// Check if we have a solution. We found a path if previous[toWord] exists.
-		if (previous.containsKey(toWord)) {
-			List<String> path = new ArrayList<>();
-			
-			String word = toWord;
-			while (!word.equals(fromWord)) {
-				String previousWord = previous.get(word);
-				path.add(0, previousWord);
-				word = previousWord;
-			}
-			
-			path.add(toWord);
-			return path;
-		} else {
+
+		return getPath(previous, fromWord, toWord);
+	}
+
+	/**
+	 * Constructs a path from a start word to an end word, using predecessor data from a breadth-first search.
+	 * @param previous A Map from words to their predecessor in the shortest path
+	 * @param fromWord The starting word in the path.
+	 * @param toWord The ending word in the path.
+	 * @return a List of words in the path given the precedessor data, or null if no path can be constructed.
+	 */
+	private List<String> getPath(final Map<String, String> previous, final String fromWord, final String toWord) {
+		if (!previous.containsKey(toWord)) {
 			return null;
 		}
-		
-		
-	}
-	
-	/**
-	 * Determines the next word to visit to find the shortest path.
-	 * @param wordsToVisit The set of candidate words to visit.
-	 * @param distances The currently known distances.
-	 */
-	private String getNextWord(final Set<String> wordsToVisit, final Map<String, Integer> distances) {
-		int minDistance = Integer.MAX_VALUE;
-		String nextWord = null;
-		
-		for (String word : wordsToVisit) {
-			int distance = distances.get(word);
-			if (distance < minDistance) {
-				minDistance = distance;
-				nextWord = word;
-			}
+
+		List<String> path = new ArrayList<>();
+		String word = toWord;
+		while (!word.equals(fromWord)) {
+			path.add(0, word);
+			word = previous.get(word);
 		}
-		
-		return nextWord;
+
+		path.add(0, fromWord);
+		return path;
 	}
 }
