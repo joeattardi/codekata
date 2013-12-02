@@ -1,6 +1,7 @@
 import java.io.IOException;
 import java.io.FileReader;
 import java.io.BufferedReader;
+import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -19,14 +20,23 @@ import java.util.ArrayList;
  * letter of the alphabet. Those lists will contain each word of the given length and starting with the
  * given letter. This makes a much smaller set of data to search for a given word.
  *
+ * I extended this from the original problem. The default behavior is as the kata specifies - it will find
+ * all six-letter words that are made up of two smaller words. The program takes two optional command-line
+ * arguments. The first argument is the word length to use, and the second is the number of sub-words.
+ *
+ * Composition 6 2  --> prints all 6-letter words that are made up of 2 smaller words
+ * Composition 10 3 --> prints all 10-letter words that are made up of 3 smaller words
+ *
  * @author Joe Attardi (joe@attardi.net)
  */
 public class Composition {
   private int wordLength;
+  private int numSubWords;
   private Dictionary dictionary;
 
-  public Composition(int wordLength) {
+  public Composition(final int wordLength, final int numSubWords) {
     this.wordLength = wordLength;
+    this.numSubWords = numSubWords;
     dictionary = new Dictionary(wordLength);
     loadDictionary();
   }
@@ -51,40 +61,47 @@ public class Composition {
   public void findComposites() {
     List<String> words = dictionary.getWords(wordLength);
     for (String word: words) {
-      processWord(word);
-    }
-  }
-
-  /**
-   * Finds any composite word pairs for a given word.
-   * @param word The word to operate on.
-   */
-  private void processWord(final String word) {
-    for (int n = wordLength - 1; n > 0; n--) {
-      findSubWords(word, n);
-    }
-  }
-
-  /**
-   * Finds any composite word pairs for a given word, of a given first word length.
-   * For example:
-   *   For the word "soothe" and first word length 4, we could find "soot" (4 letters) and "he".
-   *
-   * @param word The word to operate on.
-   * @param firstWordLength The length of the first sub-word.
-   */
-  private void findSubWords(final String word, final int firstWordLength) {
-    String word1 = word.substring(0, firstWordLength);
-    if (dictionary.findWord(word1)) {
-      String word2 = word.substring(firstWordLength);
-      if (dictionary.findWord(word2)) {
-        System.out.println(word + " => " + word1 + " + " + word2);
+      List<String> subWords = findSubWords(word, numSubWords);
+      if (subWords != null) {
+        System.out.println(word + " => " + subWords);
       }
     }
   }
 
+  /**
+   * Recursively searches for sub-words that make up a given word.
+   * @param word The base word
+   * @param numWords The number of sub-words to find inside the base word
+   * @return A List of the sub-words that make up the word, or null if the word is not made up of numWords sub-words.
+   */
+  private List<String> findSubWords(final String word, final int numWords) {      
+    if (numWords == 1) {      
+      if (dictionary.findWord(word)) {
+        return Arrays.asList(word);
+      } else {
+        return null;
+      }
+    } else {
+      List<String> words = new ArrayList<>();
+      for (int n = 1; n < word.length(); n++) {
+        String subword = word.substring(0, n);        
+        if (dictionary.findWord(subword)) {          
+          List<String> subwords = findSubWords(word.substring(n), numWords - 1);
+          if (subwords != null) {
+            words.addAll(0, subwords);
+            words.add(0, subword);
+            return words;
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
   public static void main(String...args) {
     int wordLength = 6;
+    int subWords = 2;
 
     if (args.length > 0) {
       try {
@@ -93,7 +110,16 @@ public class Composition {
         // ignore the input, use the default value
       }
     }
-    new Composition(wordLength).findComposites();
+
+    if (args.length > 1) {
+      try {
+        subWords = Integer.parseInt(args[1]);
+      } catch (NumberFormatException nfe) {
+        // ignore the input, use the default value
+      }
+    }
+
+    new Composition(wordLength, subWords).findComposites();
   }
 }
 
