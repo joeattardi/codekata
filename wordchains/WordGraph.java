@@ -19,44 +19,21 @@ import java.util.LinkedList;
  *
  */
 public class WordGraph {
-	private Map<String, List<String>> wordMap = new HashMap<>();
-	
-	/**
-	 * Adds a transition between two words.
-	 * @param fromWord The starting word.
-	 * @param toWord The transition word.
-	 */
-	public void addTransition(final String fromWord, final String toWord) {
-		List<String> transitions = wordMap.get(fromWord);
-		if (transitions == null) {
-			transitions = new ArrayList<String>();
-			wordMap.put(fromWord, transitions);
-		}
-		
-		transitions.add(toWord);
+	private List<String> wordList;
+
+	public WordGraph(final List<String> wordList) {
+		this.wordList = wordList;
 	}
-	
-	/**
-	 * Checks if the graph contains a given word.
-	 * @param word The word to check.
-	 * @return true if the graph contains the given word, false if not.
-	 */
-	public boolean containsWord(final String word) {
-		return wordMap.containsKey(word);
-	}
-	
+
 	/**
 	 * Finds the shortest path between two words using a breadth-first search of the graph.
+	 * and building the graph on the fly.
 	 *
 	 * @param fromWord The starting word
 	 * @param toWord The ending word
 	 * @return a List of words in the shortest path, or null if no path could be found
 	 */
 	public List<String> findShortestPath(final String fromWord, final String toWord) {
-		if (!wordMap.containsKey(fromWord) || !wordMap.containsKey(toWord)) {
-			return null;
-		}
-
 		Map<String, String> previous = new HashMap<>();
 
 		Set<String> visited = new HashSet<>();
@@ -67,7 +44,8 @@ public class WordGraph {
 
 		String word = null;
 		while (!q.isEmpty() && !(word = q.remove()).equals(toWord)) {
-			for (String nextWord : wordMap.get(word)) {
+			List<String> nextWords = getNextWords(word);			
+			for (String nextWord : nextWords) {
 				if (!visited.contains(nextWord)) {
 					visited.add(nextWord);
 					previous.put(nextWord, word);
@@ -77,6 +55,39 @@ public class WordGraph {
 		}
 
 		return getPath(previous, fromWord, toWord);
+	}
+
+	/**
+	 * Gets all the words that can be reached from a given word by changing one letter.
+	 * @param word The starting word.
+	 * @return A List of all words that can be reached from the starting word 
+	 */
+	private List<String> getNextWords(final String word) {
+		List<String> nextWords = new ArrayList<>();
+		for (String currWord : wordList) {
+			if (getWordDiff(word, currWord) == 1) {
+				nextWords.add(currWord);
+			}
+		}
+
+		return nextWords;
+	}
+
+	/**
+	 * Calculates the number of letter differences between two words.
+	 * @param word1 The first word
+	 * @param word2 The second word
+	 * @return The number of differing letters in the two words.
+	 */
+	private int getWordDiff(final String word1, final String word2) {
+		int diff = 0;
+		for (int n = 0; n < word1.length(); n++) {
+			if (word1.charAt(n) != word2.charAt(n)) {
+				diff++;
+			}
+		}
+
+		return diff;
 	}
 
 	/**

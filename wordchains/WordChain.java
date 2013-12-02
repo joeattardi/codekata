@@ -21,7 +21,7 @@ public class WordChain {
     private List<String> wordList;
     private String startWord;
     private String endWord;
-    private WordGraph graph = new WordGraph();
+    private WordGraph graph;
 
     public static void main(String...args) {
         if (args.length < 2) {
@@ -51,8 +51,8 @@ public class WordChain {
         this.startWord = startWord;
         this.endWord = endWord;
         
-        wordList = loadWords(startWord.length());        
-        buildWordGraph(startWord);
+        wordList = loadWords(startWord.length());     
+        graph = new WordGraph(wordList);   
     }      
 
     /**
@@ -61,39 +61,6 @@ public class WordChain {
      */
     public List<String> getChain() {
         return graph.findShortestPath(startWord, endWord);
-    }
-
-    /**
-     * Builds the word graph for a given word, then recursively builds
-     * the word graph for all words it's connected to.
-     * @param word The word to start at.
-     */
-    private void buildWordGraph(String word) {
-    	for (String currWord : wordList) {
-    		if (isChain(word, currWord)) {
-    			graph.addTransition(word, currWord);
-    			if (!graph.containsWord(currWord)) {
-    				buildWordGraph(currWord);
-    			}
-    		}
-    	}
-    }
-    
-    /**
-     * Checks if two words are adjacent in a word chain.
-     * @param word1 The first word
-     * @param word2 The second word
-     * @return true if word1 and word2 differ by exactly one letter, false otherwise.
-     */
-    private boolean isChain(final String word1, final String word2) {
-        int diff = 0;
-        for (int n = 0; n < word1.length(); n++) {
-            if (word1.charAt(n) != word2.charAt(n)) {
-                diff++;
-            }
-        }
-
-        return diff == 1;
     }
 
     /**
