@@ -14,7 +14,7 @@ import java.util.LinkedList;
  *
  * Part of Code Kata 19: Word Chains
  * http://codekata.pragprog.com/2007/01/kata_nineteen_w.html
- * 
+ *
  * @author Joe Attardi (joe@attardi.net)
  *
  */
@@ -36,18 +36,14 @@ public class WordGraph {
 	public List<String> findShortestPath(final String fromWord, final String toWord) {
 		Map<String, String> previous = new HashMap<>();
 
-		Set<String> visited = new HashSet<>();
-		visited.add(fromWord);
-
 		Queue<String> q = new LinkedList<>();
 		q.add(fromWord);
 
 		String word = null;
 		while (!q.isEmpty() && !(word = q.remove()).equals(toWord)) {
-			List<String> nextWords = getNextWords(word);			
+			List<String> nextWords = getNextWords(word);
 			for (String nextWord : nextWords) {
-				if (!visited.contains(nextWord)) {
-					visited.add(nextWord);
+				if (!previous.containsKey(nextWord)) {
 					previous.put(nextWord, word);
 					q.add(nextWord);
 				}
@@ -60,7 +56,7 @@ public class WordGraph {
 	/**
 	 * Gets all the words that can be reached from a given word by changing one letter.
 	 * @param word The starting word.
-	 * @return A List of all words that can be reached from the starting word 
+	 * @return A List of all words that can be reached from the starting word
 	 */
 	private List<String> getNextWords(final String word) {
 		List<String> nextWords = new ArrayList<>();
